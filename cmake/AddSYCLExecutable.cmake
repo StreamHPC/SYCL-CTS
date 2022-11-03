@@ -13,6 +13,13 @@ endif()
 
 find_package(${SYCL_IMPLEMENTATION} REQUIRED)
 
+find_file(SYCL_IMPLEMENTATION_ADAPTER
+  Adapt${SYCL_IMPLEMENTATION}.cmake
+  PATHS "${CMAKE_MODULE_PATH}"
+)
+#include("${SYCL_IMPLEMENTATION_ADAPTER}")
+include("${PROJECT_SOURCE_DIR}/cmake/AdaptComputeCpp.cmake")
+
 if(NOT TARGET SYCL::SYCL)
     message(FATAL_ERROR
         "The SYCL CTS requires a CMake Target with the name `SYCL::SYCL` to be"

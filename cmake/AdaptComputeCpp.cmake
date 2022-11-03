@@ -6,51 +6,13 @@
 #
 # ************************************************************************
 
-find_path(ComputeCpp_INCLUDE_DIRS CL/sycl.hpp
-    HINTS ${COMPUTECPP_INSTALL_DIR} ${ComputeCpp_DIR}
-    PATH_SUFFIXES include)
-
-find_library(ComputeCpp_LIBRARIES
-    NAMES ComputeCpp_vs2015 ComputeCpp
-    HINTS ${COMPUTECPP_INSTALL_DIR} ${ComputeCpp_DIR}
-    PATH_SUFFIXES lib)
-
-find_program(ComputeCpp_EXECUTABLE
-    compute++
-    HINTS ${COMPUTECPP_INSTALL_DIR} ${ComputeCpp_DIR}
-    PATH_SUFFIXES bin)
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(ComputeCpp
-    REQUIRED_VARS ComputeCpp_EXECUTABLE ComputeCpp_LIBRARIES ComputeCpp_INCLUDE_DIRS)
-
-find_package(Threads REQUIRED)
-
-add_executable(ComputeCpp::compute++ IMPORTED)
-set_target_properties(ComputeCpp::compute++ PROPERTIES
-    IMPORTED_LOCATION ${ComputeCpp_EXECUTABLE})
-
-add_library(ComputeCpp::Runtime UNKNOWN IMPORTED GLOBAL)
-set_target_properties(ComputeCpp::Runtime PROPERTIES
-    IMPORTED_LOCATION                    "${ComputeCpp_LIBRARIES}"
-    INTERFACE_INCLUDE_DIRECTORIES        "${ComputeCpp_INCLUDE_DIRS}"
-    INTERFACE_LINK_LIBRARIES             "OpenCL::OpenCL;Threads::Threads"
-    INTERFACE_COMPILE_DEFINITIONS        "SYCL_LANGUAGE_VERSION=2020"
-    INTERFACE_DEVICE_COMPILE_DEFINITIONS "SYCL_LANGUAGE_VERSION=2020"
-    INTERFACE_DEVICE_COMPILE_OPTIONS     "-sycl;-std=c++17"
-  )
-if (WIN32)
-    set_property(TARGET ComputeCpp::Runtime APPEND PROPERTY
-                 INTERFACE_DEVICE_COMPILE_DEFINITIONS
-                 "_SIZE_T_DEFINED;_NO_CRT_STDIO_INLINE")
-endif()
-
 add_library(SYCL::SYCL INTERFACE IMPORTED GLOBAL)
-set_target_properties(SYCL::SYCL PROPERTIES INTERFACE_LINK_LIBRARIES ComputeCpp::Runtime)
-
-set(COMPUTECPP_USER_FLAGS "" CACHE STRING "User flags for compute++")
-separate_arguments(COMPUTECPP_USER_FLAGS)
-mark_as_advanced(COMPUTECPP_USER_FLAGS)
+target_link_libraries(SYCL::SYCL INTERFACE ComputeCpp::ComputeCpp)
+target_compile_definitions(SYCL::SYCL INTERFACE SYCL_LANGUAGE_VERSION=${SYCL_LANGUAGE_VERSION})
+#set_target_properties(SYCL::SYCL PROPERTIES
+#  INTERFACE_DEVICE_COMPILE_DEFINITIONS "SYCL_LANGUAGE_VERSION=${SYCL_LANGUAGE_VERSION}"
+#  INTERFACE_DEVICE_COMPILE_OPTIONS     "-sycl"
+#)
 
 # build_spir
 # Runs the device compiler on a single source file, creating the stub and the bc files.
@@ -60,15 +22,17 @@ function(build_spir exe_name spir_target_name source_file output_path)
     set(stub_file  ${spir_target_name}.cpp.sycl)
     set(bc_file    ${spir_target_name}.cpp.bc)
 
-    set(output_bc ${output_path}/${bc_file})
-    set(output_stub ${output_path}/${stub_file})
+    set(output_bc "${output_path}/${bc_file}")
+    set(output_stub "${output_path}/${stub_file}")
 
     if(WIN32 AND MSVC)
         set(platform_specific_args -fdiagnostics-format=msvc)
     endif()
 
-    set(device_compile_definitions "$<TARGET_PROPERTY:ComputeCpp::Runtime,INTERFACE_DEVICE_COMPILE_DEFINITIONS>")
-    set(device_compile_options "$<TARGET_PROPERTY:ComputeCpp::Runtime,INTERFACE_DEVICE_COMPILE_OPTIONS>")
+    #message(STATUS "SYCL_LANGUAGE_VERSION: ${SYCL_LANGUAGE_VERSION}")
+
+    #set(device_compile_definitions "$<TARGET_PROPERTY:SYCL::SYCL,INTERFACE_DEVICE_COMPILE_DEFINITIONS>")
+    #set(device_compile_options "$<TARGET_PROPERTY:SYCL::SYCL,INTERFACE_DEVICE_COMPILE_OPTIONS>")
     set(include_directories "$<TARGET_PROPERTY:${exe_name},INCLUDE_DIRECTORIES>")
     set(compile_definitions "$<TARGET_PROPERTY:${exe_name},COMPILE_DEFINITIONS>")
 
@@ -77,22 +41,20 @@ function(build_spir exe_name spir_target_name source_file output_path)
     # We prepend the compiler launcher to enable SYCL_CTS_MEASURE_BUILD_TIMES
     # to also measure device compiler times.
     COMMAND ${CMAKE_CXX_COMPILER_LAUNCHER}
-            $<TARGET_FILE:ComputeCpp::compute++>
-            -Wno-ignored-attributes
-            -O2
-            -mllvm -inline-threshold=1000
-            -intelspirmetadata
+            "${ComputeCpp_DEVICE_COMPILER_EXECUTABLE}"
+            ${COMPUTECPP_DEVICE_COMPILER_FLAGS}
             ${COMPUTECPP_USER_FLAGS}
             ${platform_specific_args}
             $<$<BOOL:${include_directories}>:-I\"$<JOIN:${include_directories},\"\;-I\">\">
             $<$<BOOL:${compile_definitions}>:-D$<JOIN:${compile_definitions},\;-D>>
-            $<$<BOOL:${device_compile_definitions}>:-D$<JOIN:${device_compile_definitions},\;-D>>
-            $<JOIN:${device_compile_options},\;>
-            -o ${output_bc}
-            -c ${source_file}
+            #$<$<BOOL:${device_compile_definitions}>:-D$<JOIN:${device_compile_definitions},\;-D>>
+            #$<JOIN:${device_compile_options},\;>
+            -sycl
+            -o "${output_bc}"
+            -c "${source_file}"
     COMMAND_EXPAND_LISTS
-    DEPENDS ${source_file}
-    WORKING_DIRECTORY ${output_path}
+    DEPENDS "${source_file}"
+    WORKING_DIRECTORY "${output_path}"
     COMMENT "Building SPIR object ${output_bc}")
 
     add_custom_target(${spir_target_name}_spir DEPENDS ${output_stub})
@@ -126,7 +88,7 @@ function(add_sycl_executable_implementation)
         build_spir("${exe_name}" "${spir_target_name}" "${source_file}" "${destination_stub_path}")
         add_dependencies(${exe_name} ${spir_target_name}_spir)
         set(output_stub "${destination_stub_path}/${spir_target_name}.cpp.sycl")
-        if(WIN32)
+        if(MSVC)
             set_source_files_properties(${source_file} PROPERTIES
                 OBJECT_DEPENDS "${output_stub}"
                 COMPILE_FLAGS  /FI\"${output_stub}\")
@@ -139,6 +101,6 @@ function(add_sycl_executable_implementation)
 
     set_target_properties(${exe_name} PROPERTIES
         FOLDER         "Tests/${exe_name}"
-        LINK_LIBRARIES "ComputeCpp::Runtime;$<$<BOOL:${WIN32}>:-SAFESEH:NO>"
-        BUILD_RPATH    "$<TARGET_FILE_DIR:ComputeCpp::Runtime>")
+        #LINK_LIBRARIES "ComputeCpp::ComputeCpp;$<$<BOOL:${WIN32}>:-SAFESEH:NO>"
+        BUILD_RPATH    "$<TARGET_FILE_DIR:ComputeCpp::ComputeCpp>")
 endfunction()
