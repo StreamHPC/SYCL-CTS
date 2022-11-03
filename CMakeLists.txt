@@ -16,7 +16,7 @@ endif()
 add_subdirectory(vendor/Catch2)
 
 # set host compiler flags
-if(WIN32)
+if(WIN32 AND MSVC)
     add_compile_options(/bigobj)
 endif()
 
