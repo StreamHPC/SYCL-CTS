@@ -32,8 +32,7 @@ inline void print_errors(
 }
 
 DISABLED_FOR_TEST_CASE(hipSYCL, ComputeCpp, DPCPP)
-("LegacyRandomAccessIterator requirement verification for sycl::accessor "
- "iterator",
+("LegacyRandomAccessIterator requirement verification for sycl::accessor ",
  "[accessor]")({
   using namespace sycl_cts;
   using namespace named_requirement_verification;
