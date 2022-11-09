@@ -82,6 +82,8 @@ function(add_sycl_executable_implementation)
         COMPILE_OPTIONS     $<TARGET_PROPERTY:${exe_name},COMPILE_OPTIONS>
         COMPILE_FEATURES    $<TARGET_PROPERTY:${exe_name},COMPILE_FEATURES>
         POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(${object_lib_name} ${exe_name} PROPERTIES
+        COMPILE_DEFINITIONS "CL_TARGET_OPENCL_VERSION=300;SYCL_LANGUAGE_VERSION=${SYCL_LANGUAGE_VERSION}")
 
     foreach(source_file ${test_cases_list})
         get_filename_component(spir_target_name ${source_file} NAME_WE)
@@ -95,7 +97,7 @@ function(add_sycl_executable_implementation)
         else()
             set_source_files_properties(${source_file} PROPERTIES
                 OBJECT_DEPENDS "${output_stub}"
-                COMPILE_FLAGS  "-include ${output_stub}")
+                COMPILE_FLAGS  "-include ${output_stub} -Wno-nonportable-include-path")
 	    endif()
     endforeach()
 

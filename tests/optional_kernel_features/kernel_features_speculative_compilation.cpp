@@ -166,11 +166,13 @@ DISABLED_FOR_TEST_CASE(hipSYCL, ComputeCpp, DPCPP)
   if (max_wg_size >= testing_wg_size[0]) {
     {
       const auto separate_lambda_no_arg =
-          []() [[sycl::reqd_work_group_size(testing_wg_size[0])]]{};
-      const auto separate_lambda_item_arg = [](sycl::item<1>)
-          [[sycl::reqd_work_group_size(testing_wg_size[0])]]{};
-      const auto separate_lambda_group_arg = [](sycl::group<1>)
-          [[sycl::reqd_work_group_size(testing_wg_size[0])]]{};
+          []() [[sycl::reqd_work_group_size(testing_wg_size[0])]] {};
+      const auto separate_lambda_item_arg =
+          [](sycl::item<1>)
+              [[sycl::reqd_work_group_size(testing_wg_size[0])]] {};
+      const auto separate_lambda_group_arg =
+          [](sycl::group<1>)
+              [[sycl::reqd_work_group_size(testing_wg_size[0])]] {};
 
       run_separate_lambda(is_exception_expected, errc_expected, queue,
                           separate_lambda_no_arg, separate_lambda_item_arg,
@@ -192,11 +194,13 @@ DISABLED_FOR_TEST_CASE(hipSYCL, ComputeCpp, DPCPP)
   if (max_wg_size >= testing_wg_size[1]) {
     {
       const auto separate_lambda_no_arg =
-          []() [[sycl::reqd_work_group_size(testing_wg_size[1])]]{};
-      const auto separate_lambda_item_arg = [](sycl::item<1>)
-          [[sycl::reqd_work_group_size(testing_wg_size[1])]]{};
-      const auto separate_lambda_group_arg = [](sycl::group<1>)
-          [[sycl::reqd_work_group_size(testing_wg_size[1])]]{};
+          []() [[sycl::reqd_work_group_size(testing_wg_size[1])]] {};
+      const auto separate_lambda_item_arg =
+          [](sycl::item<1>)
+              [[sycl::reqd_work_group_size(testing_wg_size[1])]] {};
+      const auto separate_lambda_group_arg =
+          [](sycl::group<1>)
+              [[sycl::reqd_work_group_size(testing_wg_size[1])]] {};
 
       run_separate_lambda(is_exception_expected, errc_expected, queue,
                           separate_lambda_no_arg, separate_lambda_item_arg,
@@ -223,11 +227,13 @@ DISABLED_FOR_TEST_CASE(hipSYCL, ComputeCpp, DPCPP)
   if (find_res != sg_sizes_vec.end()) {
     {
       const auto separate_lambda_no_arg =
-          []() [[sycl::reqd_sub_group_size(testing_sg_size[0])]]{};
+          []() [[sycl::reqd_sub_group_size(testing_sg_size[0])]] {};
       const auto separate_lambda_item_arg =
-          [](sycl::item<1>) [[sycl::reqd_sub_group_size(testing_sg_size[0])]]{};
-      const auto separate_lambda_group_arg = [](sycl::group<1>)
-          [[sycl::reqd_sub_group_size(testing_sg_size[0])]]{};
+          [](sycl::item<1>)
+              [[sycl::reqd_sub_group_size(testing_sg_size[0])]] {};
+      const auto separate_lambda_group_arg =
+          [](sycl::group<1>)
+              [[sycl::reqd_sub_group_size(testing_sg_size[0])]] {};
 
       run_separate_lambda(is_exception_expected, errc_expected, queue,
                           separate_lambda_no_arg, separate_lambda_item_arg,
@@ -251,11 +257,13 @@ DISABLED_FOR_TEST_CASE(hipSYCL, ComputeCpp, DPCPP)
   if (find_res != sg_sizes_vec.end()) {
     {
       const auto separate_lambda_no_arg =
-          []() [[sycl::reqd_sub_group_size(testing_sg_size[1])]]{};
+          []() [[sycl::reqd_sub_group_size(testing_sg_size[1])]] {};
       const auto separate_lambda_item_arg =
-          [](sycl::item<1>) [[sycl::reqd_sub_group_size(testing_sg_size[1])]]{};
-      const auto separate_lambda_group_arg = [](sycl::group<1>)
-          [[sycl::reqd_sub_group_size(testing_sg_size[1])]]{};
+          [](sycl::item<1>)
+              [[sycl::reqd_sub_group_size(testing_sg_size[1])]] {};
+      const auto separate_lambda_group_arg =
+          [](sycl::group<1>)
+              [[sycl::reqd_sub_group_size(testing_sg_size[1])]] {};
 
       run_separate_lambda(is_exception_expected, errc_expected, queue,
                           separate_lambda_no_arg, separate_lambda_item_arg,
