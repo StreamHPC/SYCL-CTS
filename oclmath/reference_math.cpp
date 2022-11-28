@@ -71,15 +71,17 @@
 
 // Declare Classification macros for non-C99 platforms
 #ifndef isinf
-    #define isinf(x)    (	sizeof (x) == sizeof(float )	?	fabsf(x) == INFINITY  	\
-                        :	sizeof (x) == sizeof(double)	?	fabs(x) == INFINITY  	\
-                        :	fabsl(x) == INFINITY)
+    #define isinf(x)    [](auto y){                                                                        \
+                            if      constexpr (sizeof (y) == sizeof(float )) return fabsf(y) == INFINITY;  \
+                            else if constexpr (sizeof (y) == sizeof(double)) return fabs(y) == INFINITY;   \
+                            else return fabsl(y) == INFINITY; }(x)
 #endif
 
 #ifndef isfinite
-    #define isfinite(x) (	sizeof (x) == sizeof(float )	?	fabsf(x) < INFINITY  	\
-                        :	sizeof (x) == sizeof(double)	?	fabs(x) < INFINITY  	\
-                        :	fabsl(x) < INFINITY)
+    #define isfinite(x) [](auto y){                                                                        \
+                            if      constexpr (sizeof (y) == sizeof(float )) return fabsf(y) < INFINITY;   \
+                            else if constexpr (sizeof (y) == sizeof(double)) return fabs(y) < INFINITY;    \
+                            else return fabsl(y) < INFINITY; }(x)
 #endif
 
 #ifndef isnan
@@ -91,9 +93,10 @@
 #endif
 
 #ifndef isnormal
-    #define isnormal(x) (	sizeof (x) == sizeof(float )	?	(fabsf(x) < INFINITY && fabsf(x) >= FLT_MIN) 	\
-                        :	sizeof (x) == sizeof(double)	?	(fabs(x) < INFINITY && fabs(x) >= DBL_MIN) 	\
-                        :	(fabsl(x) < INFINITY && fabsl(x) >= LDBL_MIN)   )
+    #define isnormal(x) [](auto y){                                                                                             \
+                            if      constexpr (sizeof (y) == sizeof(float )) return fabsf(y) < INFINITY && fabsf(y) >= FLT_MIN; \
+                            else if constexpr (sizeof (y) == sizeof(double)) return fabs(y)  < INFINITY && fabs(y)  >= DBL_MIN; \
+                            else return fabsl(y) < INFINITY && fabsl(y) >= LDBL_MIN; }(x)
 #endif
 
 #ifndef islessgreater
@@ -2118,7 +2121,7 @@ static inline double_double accum_d( double_double a, double b )
 
 static inline double_double add_dd( double_double a, double_double b )
 {
-    double_double r = {-0.0 -0.0 };
+    double_double r = {-0.0, -0.0 };
     
     if( isinf(a.hi) || isinf( b.hi )  ||
        isnan(a.hi) || isnan( b.hi )  ||
@@ -2469,6 +2472,7 @@ static inline void mul128( cl_ulong a, cl_ulong b, cl_ulong *hi, cl_ulong *lo )
 
 // Move the most significant non-zero bit to the MSB
 // Note: not general. Only works if the most significant non-zero bit is at MSB-1
+/*
 static inline void renormalize( cl_ulong *hi, cl_ulong *lo, int *exponent )
 {
     if( 0 == (0x8000000000000000ULL & *hi ))
@@ -2479,6 +2483,7 @@ static inline void renormalize( cl_ulong *hi, cl_ulong *lo, int *exponent )
         *exponent -= 1;
     }
 }
+*/
 
 static double round_to_nearest_even_double( cl_ulong hi, cl_ulong lo, int exponent );
 static double round_to_nearest_even_double( cl_ulong hi, cl_ulong lo, int exponent )
@@ -3047,9 +3052,9 @@ long double reference_cbrtl(long double x)
 	
 	double fabsx = reference_fabs( x );
 	
-    if( isnan(x) || fabsx == 1.0 || fabsx == 0.0 || isinf(x) )
-        return x; 
-	
+	if( isnan(x) || fabsx == 1.0 || fabsx == 0.0 || isinf(x) )
+		return x;
+
 	double iy = 0.0;
 	double log2x_hi, log2x_lo;
 	
@@ -4615,21 +4620,21 @@ double reference_remquo(double xd, double yd, int *n)
         else //ex-ey = -1
             xr = reference_ldexp(xr, ex-ey); 
     }
-            
+
 	if( (yr < 2.0f*xr) || ( (yr == 2.0f*xr) && (q & 0x00000001) ) ) {
 		xr -= yr;
 		q += 1;
 	}
-    
-    if(ex-ey >= -1)
-        xr = reference_ldexp(xr, ey);
-	
+
+	if(ex-ey >= -1)
+		xr = reference_ldexp(xr, ey);
+
 	int qout = q & 0x0000007f;
 	if( signn < 0)
 		qout = -qout;
 	if( xx < 0.0 )
 		xr = -xr;
-	
+
 	*n = qout;
 	
 	return xr;
@@ -4702,16 +4707,16 @@ long double reference_remquol(long double xd, long double yd, int *n)
 		xr -= yr;
 		q += 1;
 	}
-	
-    if(ex-ey >= -1)
-        xr = reference_ldexp(xr, ey);
-    
+
+	if(ex-ey >= -1)
+		xr = reference_ldexp(xr, ey);
+
 	int qout = q & 0x0000007f;
 	if( signn < 0)
 		qout = -qout;
 	if( xx < 0.0 )
 		xr = -xr;
-	
+
 	*n = qout;	
 	return xr;
 }
