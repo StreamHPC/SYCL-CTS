@@ -108,6 +108,31 @@ class buffer_ctors {
       }
     }
 
+    /* check (Container)*/
+    if (dims == 1) {
+      std::vector<T> cont(size);
+      sycl::buffer<T, dims> buf(cont, propList);
+      sycl::buffer<T, dims> buf1(cont);
+      constexpr bool data_verify = true;
+      if (!check_buffer_constructor(buf, r, data_verify) ||
+          !check_buffer_constructor(buf1, r, data_verify)) {
+        FAIL(log, "(Container) constructor fail.");
+      }
+    }
+
+    /* check (Container, allocator)*/
+    if (dims == 1) {
+      std::vector<T> cont(size);
+      sycl::buffer_allocator<T> buf_alloc;
+      sycl::buffer<T, dims> buf(cont, buf_alloc, propList);
+      sycl::buffer<T, dims> buf1(cont, buf_alloc);
+      constexpr bool data_verify = true;
+      if (!check_buffer_constructor(buf, r, data_verify) ||
+          !check_buffer_constructor(buf1, r, data_verify)) {
+        FAIL(log, "(Container, allocator) constructor fail.");
+      }
+    }
+
     /* check (shared pointer, range) constructor*/
     {
       std::shared_ptr<T> data(new T[size]);
