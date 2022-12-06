@@ -9,10 +9,6 @@
 add_library(SYCL::SYCL INTERFACE IMPORTED GLOBAL)
 target_link_libraries(SYCL::SYCL INTERFACE ComputeCpp::ComputeCpp)
 target_compile_definitions(SYCL::SYCL INTERFACE SYCL_LANGUAGE_VERSION=${SYCL_LANGUAGE_VERSION})
-#set_target_properties(SYCL::SYCL PROPERTIES
-#  INTERFACE_DEVICE_COMPILE_DEFINITIONS "SYCL_LANGUAGE_VERSION=${SYCL_LANGUAGE_VERSION}"
-#  INTERFACE_DEVICE_COMPILE_OPTIONS     "-sycl"
-#)
 
 # build_spir
 # Runs the device compiler on a single source file, creating the stub and the bc files.
@@ -29,26 +25,20 @@ function(build_spir exe_name spir_target_name source_file output_path)
         set(platform_specific_args -fdiagnostics-format=msvc)
     endif()
 
-    #message(STATUS "SYCL_LANGUAGE_VERSION: ${SYCL_LANGUAGE_VERSION}")
-
-    #set(device_compile_definitions "$<TARGET_PROPERTY:SYCL::SYCL,INTERFACE_DEVICE_COMPILE_DEFINITIONS>")
-    #set(device_compile_options "$<TARGET_PROPERTY:SYCL::SYCL,INTERFACE_DEVICE_COMPILE_OPTIONS>")
     set(include_directories "$<TARGET_PROPERTY:${exe_name},INCLUDE_DIRECTORIES>")
     set(compile_definitions "$<TARGET_PROPERTY:${exe_name},COMPILE_DEFINITIONS>")
 
     add_custom_command(
-    OUTPUT  ${output_bc} ${output_stub}
+    OUTPUT ${output_bc} ${output_stub}
     # We prepend the compiler launcher to enable SYCL_CTS_MEASURE_BUILD_TIMES
     # to also measure device compiler times.
-    COMMAND ${CMAKE_CXX_COMPILER_LAUNCHER}
+    COMMAND "${CMAKE_CXX_COMPILER_LAUNCHER}"
             "${ComputeCpp_DEVICE_COMPILER_EXECUTABLE}"
             ${COMPUTECPP_DEVICE_COMPILER_FLAGS}
             ${COMPUTECPP_USER_FLAGS}
             ${platform_specific_args}
             $<$<BOOL:${include_directories}>:-I\"$<JOIN:${include_directories},\"\;-I\">\">
             $<$<BOOL:${compile_definitions}>:-D$<JOIN:${compile_definitions},\;-D>>
-            #$<$<BOOL:${device_compile_definitions}>:-D$<JOIN:${device_compile_definitions},\;-D>>
-            #$<JOIN:${device_compile_options},\;>
             -sycl
             -o "${output_bc}"
             -c "${source_file}"
