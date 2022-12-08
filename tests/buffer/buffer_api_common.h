@@ -531,10 +531,9 @@ class check_buffer_linearization {
     sycl::nd_range<3> range3d(sycl::range<3>{size, size, size},
                               sycl::range<3>{size, size, size});
 
-    // log.note("testing: " + std::to_string(Dim));
-    // test_buffer_linearization<2, sycl::buffer_allocator<size_t>>(log,
-    // range2d); test_buffer_linearization<3,
-    // sycl::buffer_allocator<size_t>>(log, range3d);
+    log.note("testing: " + std::to_string(Dim));
+    test_buffer_linearization<2, sycl::buffer_allocator<size_t>>(log, range2d);
+    test_buffer_linearization<3, sycl::buffer_allocator<size_t>>(log, range3d);
 
     test_buffer_linearization<2, std::allocator<size_t>>(log, range2d);
     test_buffer_linearization<3, std::allocator<size_t>>(log, range3d);
