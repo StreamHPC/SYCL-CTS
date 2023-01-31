@@ -130,6 +130,7 @@ jobs:
         with:
           submodules: true
       - name: Configure CMake
+        shell: bash
         working-directory: ${{ env.container-workspace }}
         run: |
           if [[ "${{matrix.sycl-impl}}" == "computecpp" ]]; then git apply --unsafe-paths --directory="/" ci/${{ matrix.sycl-impl }}.patch; fi;
